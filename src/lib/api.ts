@@ -10,10 +10,8 @@ export const api = axios.create({
 api.interceptors.request.use(
   async (config) => {
     const session = await getSession()
-    console.log('Session in API Interceptor:', session)
 
     if (session?.accessToken) {
-      console.log('Attaching Token:', session.accessToken)
       config.headers.Authorization = `Bearer ${session.accessToken}`
     } else {
       console.warn('No token found in session!')
@@ -28,7 +26,7 @@ export const addToWaitlist = async (waitlistId: number, data: any) => {
     const response = await api.post(`/waitlists/${waitlistId}/entries`, data)
     return response.data
   } catch (error) {
-    console.error('❌ Error adding to waitlist:', error)
+    console.error('Error adding to waitlist:', error)
     return null
   }
 }
@@ -37,11 +35,8 @@ export const fetchWaitlist = async (date?: string) => {
   const todayUTC = moment().utc().format('YYYY-MM-DD')
   const targetDate = date || todayUTC
 
-  console.log(`📅 Fetching waitlist for (UTC): ${targetDate}`)
-
   try {
     const response = await api.get(`/waitlist/date/${targetDate}`)
-    console.log('Fetched waitlist data:', response.data)
 
     if (response.data?.entries) {
       response.data.entries = response.data.entries
@@ -56,6 +51,16 @@ export const fetchWaitlist = async (date?: string) => {
   } catch (error) {
     console.error('Error fetching waitlist:', error)
     return { id: null, entries: [] }
+  }
+}
+
+export const createWaitlist = async (date: string) => {
+  try {
+    const response = await api.post('/waitlist', { date })
+    return response.data
+  } catch (error) {
+    console.error('Error creating waitlist:', error)
+    return null
   }
 }
 
@@ -82,22 +87,12 @@ export const updateWaitlistOrder = async (entries: any[]) => {
   }
 }
 
-export const createWaitlist = async (date: string) => {
-  try {
-    const response = await api.post('/waitlist', { date })
-    return response.data
-  } catch (error) {
-    console.error('❌ Error creating waitlist:', error)
-    return null
-  }
-}
-
 export const searchWaitlistEntries = async (query: string) => {
   try {
     const response = await api.get(`/waitlist/search?query=${query}`)
     return response.data
   } catch (error) {
-    console.error('❌ Error searching waitlist:', error)
+    console.error('Error searching waitlist:', error)
     return []
   }
 }

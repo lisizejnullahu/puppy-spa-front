@@ -1,7 +1,11 @@
-import type { Metadata } from 'next'
+'use client'
+
 import { Geist, Geist_Mono } from 'next/font/google'
-import SessionProvider from '../components/SessionProvider'
 import './globals.css'
+import { ThemeProvider } from '@/components/theme/theme-provider'
+import SessionProvider from '@/components/SessionProvider'
+import { SidebarProvider } from '@/components/ui/sidebar'
+import AuthenticatedLayout from '@/components/AuthenticatedLayout'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -13,11 +17,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 })
 
-export const metadata: Metadata = {
-  title: 'Puppy Spa',
-  description: 'Manage Puppy Spa appointments and waitlists',
-}
-
 export default function RootLayout({
   children,
 }: {
@@ -26,9 +25,15 @@ export default function RootLayout({
   return (
     <html lang='en'>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} flex min-h-screen antialiased`}
       >
-        <SessionProvider>{children}</SessionProvider>
+        <ThemeProvider>
+          <SessionProvider>
+            <SidebarProvider>
+              <AuthenticatedLayout>{children}</AuthenticatedLayout>
+            </SidebarProvider>
+          </SessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

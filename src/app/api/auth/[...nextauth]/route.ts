@@ -20,8 +20,6 @@ const handler = NextAuth({
             }
           )
 
-          console.log('Backend Response:', response.data)
-
           const user = response.data
 
           if (user) {
@@ -43,7 +41,6 @@ const handler = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        console.log('JWT Callback User:', user)
         token.id = user.id
         token.username = user.username
         token.profileImage = user.profileImage
@@ -52,7 +49,6 @@ const handler = NextAuth({
       return token
     },
     async session({ session, token }) {
-      console.log('Session Token:', token)
       session.user = {
         id: token.id,
         username: token.username,

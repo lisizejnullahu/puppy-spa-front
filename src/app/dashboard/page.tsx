@@ -1,10 +1,15 @@
 'use client'
 
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useState, useEffect } from 'react'
+import { Layout } from '@/components/dashboard/DashboardLayout'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { TopNav } from '@/components/top-nav'
+import { UserNav } from '@/components/user-nav'
 import AddToWaitlist from '@/components/waitlist/AddToWaitlist'
-import Waitlist from '@/components/waitlist/Waitlist'
+import WaitlistTable from '@/components/waitlist/WaitlistTable'
+import ThemeSwitch from '@/components/theme/theme-switch'
 
 export default function Dashboard() {
   const { data: session, status } = useSession()
@@ -12,38 +17,49 @@ export default function Dashboard() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   useEffect(() => {
-    if (status === 'loading') return
-    if (!session?.user) {
-      router.push('/login')
+    if (status !== 'loading' && !session?.user) {
+      router.push('/')
     }
-  }, [session, status])
+  }, [session, status, router])
 
-  if (status === 'loading') return <p>Loading...</p>
-  if (!session?.user) return null
+  if (status === 'loading' || !session?.user) return <p>Loading...</p>
 
   const handleWaitlistUpdate = () => {
     setRefreshTrigger((prev) => prev + 1)
   }
 
-  const handleLogout = async () => {
-    await signOut({ redirect: false })
-    router.push('/login')
-  }
+  const topNav = [
+    { title: 'Waitlist', href: '/dashboard/waitlist', isActive: true },
+    { title: 'Overview', href: '/dashboard/overview', isActive: false },
+    { title: 'Settings', href: '/dashboard/settings', isActive: false },
+  ]
 
   return (
-    <div className='text-black flex flex-col items-center mt-10'>
-      <div className='flex justify-between w-full max-w-lg'>
-        <h1 className='text-xl font-bold'>Welcome, {session.user.username}!</h1>
-        <button
-          onClick={handleLogout}
-          className='bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600'
-        >
-          Logout
-        </button>
-      </div>
+    <Layout>
+      <Layout.Header>
+        <TopNav links={topNav} />
+        <div className='ml-auto flex items-center space-x-4'>
+          <ThemeSwitch />
+          <UserNav />
+        </div>
+      </Layout.Header>
 
-      <AddToWaitlist onWaitlistUpdate={handleWaitlistUpdate} />
-      <Waitlist refreshTrigger={refreshTrigger} />
-    </div>
+      <Layout.Body>
+        <Tabs defaultValue='waitlist' className='space-y-4'>
+          <TabsList>
+            <TabsTrigger value='waitlist'>Waitlist</TabsTrigger>
+            <TabsTrigger value='overview'>Add Puppies</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value='waitlist' className='space-y-4'>
+            <WaitlistTable refreshTrigger={refreshTrigger} />
+          </TabsContent>
+
+          <TabsContent value='overview' className='space-y-4'>
+            <AddToWaitlist onWaitlistUpdate={handleWaitlistUpdate} />
+          </TabsContent>
+        </Tabs>
+      </Layout.Body>
+    </Layout>
   )
 }

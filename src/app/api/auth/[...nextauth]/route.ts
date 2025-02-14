@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import axios from 'axios'
+import { jwtDecode } from 'jwt-decode'
 
 const handler = NextAuth({
   providers: [
@@ -21,16 +22,17 @@ const handler = NextAuth({
           )
 
           const user = response.data
+          if (!user?.token) return null
 
-          if (user) {
-            return {
-              id: user.id,
-              username: user.username,
-              profileImage: user.profileImage || '/default-avatar.png',
-              accessToken: user.token,
-            }
+          const decoded = jwtDecode(user.token) as { exp: number }
+          return {
+            id: user.id,
+            name: user.username,
+            email: user.email,
+            image: user.profileImage,
+            accessToken: user.token,
+            accessTokenExpires: decoded.exp * 1000,
           }
-          return null
         } catch (error) {
           console.error('Login error:', error)
           return null
@@ -39,33 +41,48 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id
-        token.username = user.username
-        token.profileImage = user.profileImage
-        token.accessToken = user.accessToken
+    async jwt({ token, user, account }) {
+      if (account && user) {
+        return {
+          ...token,
+          accessToken: user.accessToken,
+          accessTokenExpires: user.accessTokenExpires,
+          user: {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            image: user.image,
+          },
+        }
       }
-      return token
+
+      if (Date.now() < token.accessTokenExpires) {
+        return token
+      }
+
+      return { ...token, error: 'RefreshAccessTokenError' }
     },
     async session({ session, token }) {
       session.user = {
-        id: token.id,
-        username: token.username,
-        profileImage: token.profileImage,
+        id: token.user.id,
+        name: token.user.name,
+        email: token.user.email,
+        image: token.user.image,
       }
       session.accessToken = token.accessToken
+      session.error = token.error
       return session
     },
   },
   session: {
     strategy: 'jwt',
+    maxAge: 24 * 60 * 60, // 4 hours - match token expiration
+  },
+  pages: {
+    signIn: '/',
   },
   secret: process.env.NEXTAUTH_SECRET,
-  pages: {
-    signIn: '/login',
-  },
-  debug: true,
+  debug: process.env.NODE_ENV === 'development',
 })
 
 export { handler as GET, handler as POST }

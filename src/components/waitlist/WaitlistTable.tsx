@@ -2,8 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { fetchWaitlist, updateWaitlistOrder, markAsServiced } from '@/lib/api'
-import { useDrag, useDrop, DndProvider } from 'react-dnd'
+import { useDrag, useDrop } from 'react-dnd'
+import { DndProvider } from 'react-dnd'
 import { HTML5Backend } from 'react-dnd-html5-backend'
+
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import {
@@ -156,8 +158,12 @@ function WaitlistItem({
   handleMarkAsServiced: (entryId: number) => void
   userTimezone: string
 }) {
-  const ref = useDrag({ type: ItemType, item: { index } })[1]
-  const [, drop] = useDrop({
+  const [, dragRef] = useDrag({
+    type: ItemType,
+    item: { index },
+  })
+
+  const [, dropRef] = useDrop({
     accept: ItemType,
     hover: (draggedItem: { index: number }) => {
       if (draggedItem.index !== index) {
@@ -167,13 +173,18 @@ function WaitlistItem({
     },
   })
 
+  const combinedRef = (node: HTMLTableRowElement | null) => {
+    dropRef(node)
+    dragRef(node)
+  }
+
   const localTime = moment
     .utc(entry.timeOfArrival)
     .tz(userTimezone)
     .format('hh:mm A')
 
   return (
-    <TableRow ref={(node) => ref(drop(node))} className='cursor-move'>
+    <TableRow ref={combinedRef} className='cursor-move'>
       <TableCell>{entry.puppyName}</TableCell>
       <TableCell>{entry.ownerName}</TableCell>
       <TableCell>{entry.serviceNeeded}</TableCell>

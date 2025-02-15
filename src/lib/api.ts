@@ -43,7 +43,10 @@ export const fetchWaitlist = async (date?: string) => {
           ...entry,
           waitlistId: response.data.id,
         }))
-        .sort((a, b) => a.orderIndex - b.orderIndex)
+        .sort(
+          (a: { orderIndex: number }, b: { orderIndex: number }) =>
+            a.orderIndex - b.orderIndex
+        )
     }
 
     return response.data ?? { id: null, entries: [] }

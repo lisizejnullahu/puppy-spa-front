@@ -54,7 +54,7 @@ const authOptions: NextAuthOptions = {
           const user = response.data
           if (!user?.token) return null
 
-          const decoded = jwtDecode<{ exp: number }>(user.token) 
+          const decoded = jwtDecode<{ exp: number }>(user.token)
 
           return {
             id: user.id,
@@ -105,7 +105,7 @@ const authOptions: NextAuthOptions = {
           image: (token.user as { image?: string }).image || '',
         }
       }
-      session.accessToken = token.accessToken
+      session.accessToken = token.accessToken as string | undefined
       session.error = token.error
       return session
     },

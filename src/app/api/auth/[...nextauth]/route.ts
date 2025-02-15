@@ -1,9 +1,39 @@
-import NextAuth from 'next-auth'
+import NextAuth, { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import axios from 'axios'
 import { jwtDecode } from 'jwt-decode'
 
-const handler = NextAuth({
+declare module 'next-auth' {
+  interface User {
+    accessToken?: string
+    accessTokenExpires?: number
+  }
+
+  interface Session {
+    user: {
+      id: string
+      name: string
+      email: string
+      image?: string
+    }
+    accessToken?: string
+    error?: string
+  }
+
+  interface JWT {
+    accessToken?: string
+    accessTokenExpires?: number
+    user?: {
+      id: string
+      name: string
+      email: string
+      image?: string
+    }
+    error?: string
+  }
+}
+
+const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -25,6 +55,7 @@ const handler = NextAuth({
           if (!user?.token) return null
 
           const decoded = jwtDecode(user.token) as { exp: number }
+
           return {
             id: user.id,
             name: user.username,
@@ -56,7 +87,7 @@ const handler = NextAuth({
         }
       }
 
-      if (Date.now() < token.accessTokenExpires) {
+      if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
         return token
       }
 
@@ -64,10 +95,10 @@ const handler = NextAuth({
     },
     async session({ session, token }) {
       session.user = {
-        id: token.user.id,
-        name: token.user.name,
-        email: token.user.email,
-        image: token.user.image,
+        id: token.user?.id || '',
+        name: token.user?.name || '',
+        email: token.user?.email || '',
+        image: token.user?.image || '',
       }
       session.accessToken = token.accessToken
       session.error = token.error
@@ -76,13 +107,15 @@ const handler = NextAuth({
   },
   session: {
     strategy: 'jwt',
-    maxAge: 24 * 60 * 60,
+    maxAge: 24 * 60 * 60, // 24 hours
   },
   pages: {
     signIn: '/',
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: process.env.NODE_ENV === 'development',
-})
+}
+
+const handler = NextAuth(authOptions)
 
 export { handler as GET, handler as POST }

@@ -32,8 +32,7 @@ export const addToWaitlist = async (waitlistId: number, data: any) => {
 }
 
 export const fetchWaitlist = async (date?: string) => {
-  const todayUTC = moment().utc().format('YYYY-MM-DD')
-  const targetDate = date || todayUTC
+  const targetDate = date || moment().utc().format('YYYY-MM-DD')
 
   try {
     const response = await api.get(`/waitlist/date/${targetDate}`)
@@ -95,6 +94,35 @@ export const searchWaitlistEntries = async (query: string) => {
     console.error('Error searching waitlist:', error)
     return []
   }
+}
+
+export const fetchAllWaitlists = async (days: number = 7) => {
+  const session = await getSession()
+  if (!session?.accessToken) {
+    console.warn('No token found in session!')
+    return []
+  }
+
+  const headers = { Authorization: `Bearer ${session.accessToken}` }
+  const today = moment().utc()
+  const waitlists = []
+
+  for (let i = 0; i < days; i++) {
+    const date = today.clone().subtract(i, 'days').format('YYYY-MM-DD')
+    try {
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/waitlist/date/${date}`,
+        { headers }
+      )
+      if (response.data?.entries?.length) {
+        waitlists.push(response.data)
+      }
+    } catch (error) {
+      console.error(`Error fetching waitlist for ${date}:`, error)
+    }
+  }
+
+  return waitlists
 }
 
 export const markAsServiced = async (

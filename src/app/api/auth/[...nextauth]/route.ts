@@ -54,7 +54,7 @@ const authOptions: NextAuthOptions = {
           const user = response.data
           if (!user?.token) return null
 
-          const decoded = jwtDecode(user.token) as { exp: number }
+          const decoded = jwtDecode<{ exp: number }>(user.token)
 
           return {
             id: user.id,
@@ -62,7 +62,7 @@ const authOptions: NextAuthOptions = {
             email: user.email,
             image: user.profileImage,
             accessToken: user.token,
-            accessTokenExpires: decoded.exp * 1000,
+            accessTokenExpires: decoded.exp ? decoded.exp * 1000 : 0,
           }
         } catch (error) {
           console.error('Login error:', error)
@@ -89,7 +89,7 @@ const authOptions: NextAuthOptions = {
 
       if (
         typeof token.accessTokenExpires === 'number' &&
-        Date.now() < token.accessTokenExpires
+        Date.now() < (token.accessTokenExpires as number)
       ) {
         return token
       }

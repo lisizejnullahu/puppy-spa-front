@@ -54,7 +54,7 @@ const authOptions: NextAuthOptions = {
           const user = response.data
           if (!user?.token) return null
 
-          const decoded = jwtDecode<{ exp: number }>(user.token)
+          const decoded = jwtDecode<{ exp: number }>(user.token) 
 
           return {
             id: user.id,
@@ -97,11 +97,13 @@ const authOptions: NextAuthOptions = {
       return { ...token, error: 'RefreshAccessTokenError' }
     },
     async session({ session, token }) {
-      session.user = {
-        id: token.user?.id || '',
-        name: token.user?.name || '',
-        email: token.user?.email || '',
-        image: token.user?.image || '',
+      if (typeof token.user === 'object' && token.user !== null) {
+        session.user = {
+          id: (token.user as { id?: string }).id || '',
+          name: (token.user as { name?: string }).name || '',
+          email: (token.user as { email?: string }).email || '',
+          image: (token.user as { image?: string }).image || '',
+        }
       }
       session.accessToken = token.accessToken
       session.error = token.error

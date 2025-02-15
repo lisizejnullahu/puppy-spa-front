@@ -77,7 +77,7 @@ const authOptions: NextAuthOptions = {
         return {
           ...token,
           accessToken: user.accessToken,
-          accessTokenExpires: user.accessTokenExpires,
+          accessTokenExpires: user.accessTokenExpires ?? 0,
           user: {
             id: user.id,
             name: user.name,
@@ -87,7 +87,10 @@ const authOptions: NextAuthOptions = {
         }
       }
 
-      if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
+      if (
+        typeof token.accessTokenExpires === 'number' &&
+        Date.now() < token.accessTokenExpires
+      ) {
         return token
       }
 

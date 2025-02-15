@@ -106,7 +106,7 @@ const authOptions: NextAuthOptions = {
         }
       }
       session.accessToken = token.accessToken as string | undefined
-      session.error = token.error
+      session.error = token.error as string | undefined
       return session
     },
   },
